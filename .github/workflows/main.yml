@@ -1,4 +1,4 @@
-name: 抱抱脸空间状态检查与自动构建
+name: 🤗空间状态检查与自动构建
 
 on:
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ''
+          ref: main 
 
       - uses: actions/setup-python@v4
         with:
@@ -46,4 +46,4 @@ jobs:
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/index.html README.md
           git commit -m "更新空间状态报告" || echo "No changes to commit"
-          git push origin gh-pages
+          git push origin ${{ github.ref_name }} 

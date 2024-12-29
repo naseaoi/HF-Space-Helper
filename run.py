@@ -101,9 +101,8 @@ def generate_html_report(results, report_file="docs/index.html"):
             <title>Hugging Face 空间状态</title>
             <style>
                 body { font-family: sans-serif; }
-                table { border-collapse: collapse; width: 80%; margin: 20px auto; }
-                th, td { border: 1px solid black; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
+                .log-entry { margin-bottom: 10px; }
+                .timestamp { font-weight: bold; }
                 .success { color: green; }
                 .failure { color: red; }
             </style>
@@ -117,27 +116,34 @@ def generate_html_report(results, report_file="docs/index.html"):
         logging.info("创建新的 HTML 文件")
 
     existing_data = OrderedDict()
-    if "<table" in html_content:
-        table_start = html_content.find("<table")
-        table_end = html_content.find("</table>", table_start) + 8
-        table_html = html_content[table_start:table_end]
+    content_div_start = html_content.find('<div id="content">')
+    content_div_end = html_content.find('</div>', content_div_start) + 6
+    content_html = html_content[content_div_start:content_div_end]
 
-        rows = table_html.split("<tr")[2:]
-        for row in rows:
-            if "</tr>" in row:
-                cols = row.split("<td")
-                if len(cols) >= 4:
-                    timestamp = cols[1].split("</td>")[0].strip()
-                    if timestamp.startswith(current_date):
-                        existing_data[timestamp] = {}
-                        for i, space in enumerate(space_list):
-                            status_html = cols[i + 2].split("</td>")[0].strip()
-                            duration_html = cols[i + 3].split("</td>")[0].strip()
-
-                            if '<span class="success">✅</span>' in status_html:
-                                existing_data[timestamp][space] = {"status": True, "duration": duration_html}
-                            else:
-                                existing_data[timestamp][space] = {"status": False, "duration": duration_html}
+    log_entries = content_html.split('<div class="log-entry">')[1:] 
+    for entry in log_entries:
+        timestamp_start = entry.find('<span class="timestamp">') + len('<span class="timestamp">')
+        timestamp_end = entry.find('</span>', timestamp_start)
+        timestamp = entry[timestamp_start:timestamp_end].strip()
+        existing_data[timestamp] = {}
+        
+        for space in space_list:
+            space_status_start = entry.find(f"{space}:")
+            if space_status_start != -1:
+                space_status_start += len(f"{space}:")
+                space_status_end = entry.find("<br>", space_status_start)
+                space_status_str = entry[space_status_start:space_status_end].strip()
+                
+                if "✅" in space_status_str:
+                    duration_start = space_status_str.find("(") + 1
+                    duration_end = space_status_str.find(")", duration_start)
+                    duration = space_status_str[duration_start:duration_end].strip()
+                    existing_data[timestamp][space] = {"status": True, "duration": duration}
+                elif "❌" in space_status_str:
+                    duration_start = space_status_str.find("(") + 1
+                    duration_end = space_status_str.find(")", duration_start)
+                    duration = space_status_str[duration_start:duration_end].strip()
+                    existing_data[timestamp][space] = {"status": False, "duration": duration}
 
     existing_data[formatted_time] = {}
     for r in results:
@@ -146,44 +152,28 @@ def generate_html_report(results, report_file="docs/index.html"):
         else:
             existing_data[formatted_time][r['space']] = {"status": False, "duration": f"{r['duration']:.2f}秒"}
 
-    table_html = "<table>"
-    table_html += "<thead><tr><th>执行时间 (CST)</th>"
-    for space in space_list:
-        table_html += f"<th>{space}</th>"
-    table_html += "</tr></thead><tbody>"
-
+    logs_html_list = []
     for timestamp, space_results in existing_data.items():
-        table_html += "<tr>"
-        table_html += f"<td>{timestamp}</td>"
-        for space in space_list:
-            result = space_results.get(space)
-            if result:
-                status = result["status"]
-                duration = result["duration"]
-                if status:
-                    table_html += f'<td><span class="success">✅</span></td><td>{duration}</td>'
-                else:
-                    table_html += f'<td><span class="failure">❌</span></td><td>{duration}</td>'
-            else:
-                table_html += f'<td><span class="failure">❌</span></td><td>N/A</td>'
-        table_html += "</tr>"
+      log_entry = f'<div class="log-entry"><span class="timestamp">{timestamp}</span><br>'
+      for space, result in space_results.items():
+          status = result["status"]
+          duration = result["duration"]
+          if status:
+              log_entry += f"{space}: <span class='success'>✅</span> ({duration})<br>"
+          else:
+              log_entry += f"{space}: <span class='failure'>❌</span> ({duration})<br>"
+      log_entry += "</div>"
+      logs_html_list.insert(0, log_entry)
 
-    table_html += "</tbody></table>"
+    logs_html = "".join(logs_html_list)
 
-    if "<table" in html_content:
-        content_start = html_content.find("<table")
-        content_end = html_content.find("</table>", content_start) + 8
-        html_content = html_content[:content_start] + table_html + html_content[content_end:]
-    else:
-        content_div_start = html_content.find('<div id="content">')
-        content_div_end = html_content.find('</div>', content_div_start) + 6
-        html_content = html_content[:content_div_start] + '<div id="content">' + table_html + html_content[content_div_end:]
+    html_content = html_content[:content_div_start] + '<div id="content">' + logs_html + html_content[content_div_end:]
 
     logging.info(f"准备写入 HTML 文件: {report_file}")
     with open(report_file, "w", encoding="utf-8") as f:
         f.write(html_content)
     logging.info(f"HTML 报告已生成: {report_file}")
-    
+
     return formatted_time
 
 def update_readme(formatted_time):

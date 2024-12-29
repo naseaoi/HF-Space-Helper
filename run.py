@@ -82,7 +82,7 @@ def rebuild_space(space_name):
     return False, duration
 
 def generate_html_report(results, report_file="docs/index.html"):
-    logging.info(f"开始生成 HTML 报告, 文件名: {report_file}")
+    logging.info(f"开始生成HTML报告, 文件名: {report_file}")
     os.makedirs(os.path.dirname(report_file), exist_ok=True)
     current_time_utc = datetime.datetime.now(pytz.utc)
     current_time_cst = current_time_utc.astimezone(pytz.timezone('Asia/Shanghai'))
@@ -100,20 +100,58 @@ def generate_html_report(results, report_file="docs/index.html"):
         <head>
             <title>Hugging Face空间状态</title>
             <style>
-                body { font-family: sans-serif; }
-                .log-entry { margin-bottom: 10px; }
+                body { 
+                    font-family: sans-serif;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    padding: 20px;
+                    box-sizing: border-box;
+                }
+                .container {
+                    width: 100%;
+                    max-width: 800px;
+                }
+                .log-entry { 
+                    margin-bottom: 10px;
+                    border: 1px solid #ccc;
+                    padding: 10px;
+                    border-radius: 5px;
+                }
                 .timestamp { font-weight: bold; }
                 .success { color: green; }
                 .failure { color: red; }
+                #content {
+                  width: 100%;
+                }
+                .footer {
+                    margin-top: auto;
+                    width: 100%;
+                    text-align: center;
+                    font-size: 14px;
+                }
+                @media (max-width: 768px) {
+                    .log-entry {
+                        font-size: 14px;
+                    }
+                    .footer {
+                        font-size: 12px;
+                    }
+                }
             </style>
         </head>
         <body>
-            <h1>Hugging Face 空间状态</h1>
-            <div id="content"></div>
+            <div class="container">
+                <h1>Hugging Face空间状态</h1>
+                <div id="content"></div>
+                <div class="footer"></div>
+            </div>
         </body>
         </html>
         """
-        logging.info("创建新的 HTML 文件")
+        logging.info("创建新的HTML文件")
 
     existing_data = OrderedDict()
     content_div_start = html_content.find('<div id="content">')
@@ -168,17 +206,18 @@ def generate_html_report(results, report_file="docs/index.html"):
     logs_html = "".join(logs_html_list)
 
     footer_html = f"""
-    <div style="margin-top: 15px; text-align: center;">
         Copyright &copy; {datetime.datetime.now().year} <a href="https://linux.do/u/f-droid" target="_blank" style="color: #007BFF; text-decoration: none;">F-Droid</a> retain all rights reserved.<br>如果您喜欢这个工具，请给作者点个赞吧！😊
-    </div>
     """
+    
+    footer_div_start = html_content.find('<div class="footer">')
+    footer_div_end = html_content.find('</div>', footer_div_start) + 6
 
-    html_content = html_content[:content_div_start] + '<div id="content">' + logs_html + footer_html + '</div>' + html_content[content_div_end+6:]
+    html_content = html_content[:content_div_start] + '<div id="content">' + logs_html + "</div>" + html_content[content_div_end:footer_div_start] + '<div class="footer">' + footer_html + '</div>' + html_content[footer_div_end:]
 
-    logging.info(f"准备写入 HTML 文件: {report_file}")
+    logging.info(f"准备写入HTML文件: {report_file}")
     with open(report_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    logging.info(f"HTML 报告已生成: {report_file}")
+    logging.info(f"HTML报告已生成: {report_file}")
 
     return formatted_time
 
@@ -192,7 +231,7 @@ def update_readme(formatted_time):
         index_history_link = f"[{current_date}](https://github.com/{github_repo}/commits/{commit_sha}/docs/index.html)"
     else:
         index_history_link = current_date
-        logging.warning("未找到 GITHUB_REPOSITORY 环境变量, 无法生成历史链接。")
+        logging.warning("未找到GITHUB_REPOSITORY环境变量, 无法生成历史链接。")
 
     if os.path.exists(readme_file):
         with open(readme_file, "r", encoding="utf-8") as f:
@@ -210,14 +249,14 @@ def update_readme(formatted_time):
 
     if current_date not in existing_dates:
       updated_readme_content = readme_content
-      if "未找到 GITHUB_REPOSITORY 环境变量" not in readme_content:
+      if "未找到GITHUB_REPOSITORY环境变量" not in readme_content:
           updated_readme_content += f"| {index_history_link} |  |\n"
 
       with open(readme_file, "w", encoding="utf-8") as f:
           f.write(updated_readme_content)
-      logging.info(f"README.md 已更新，添加了 {current_date} 的记录。")
+      logging.info(f"README.md已更新，添加了{current_date}的记录。")
     else:
-      logging.info(f"README.md 已包含 {current_date} 的记录, 无需更新。")
+      logging.info(f"README.md已包含{current_date}的记录, 无需更新。")
 
 start_time = time.time()
 results = []

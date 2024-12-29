@@ -47,14 +47,3 @@ jobs:
           git add docs/index.html README.md
           git commit -m "更新空间状态报告" || echo "No changes to commit"
           git push origin gh-pages
-
-      - name: 部署到 GitHub Pages
-        if: always()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          force_orphan: false
-
-      - if: always()
-        run: echo "🏁状态检查与构建流程已完成, 报告已发布到 GitHub Pages"

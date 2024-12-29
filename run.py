@@ -81,7 +81,9 @@ def rebuild_space(space_name):
     logging.warning(f"⚠️空间{space_name}构建状态未知 (超时或达到最大尝试次数), 耗时: {duration:.2f}秒")
     return False, duration
 
-def generate_html_report(results, report_file="index.html"):
+def generate_html_report(results, report_file="docs/index.html"):
+    logging.info(f"开始生成 HTML 报告, 文件名: {report_file}")
+    os.makedirs(os.path.dirname(report_file), exist_ok=True)
     current_time_utc = datetime.datetime.now(pytz.utc)
     current_time_cst = current_time_utc.astimezone(pytz.timezone('Asia/Shanghai'))
     formatted_time = current_time_cst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
@@ -90,6 +92,7 @@ def generate_html_report(results, report_file="index.html"):
     if os.path.exists(report_file):
         with open(report_file, "r", encoding="utf-8") as f:
             html_content = f.read()
+        logging.info(f"已存在 HTML 文件, 内容长度: {len(html_content)}")
     else:
         html_content = """
         <!DOCTYPE html>
@@ -111,6 +114,7 @@ def generate_html_report(results, report_file="index.html"):
         </body>
         </html>
         """
+        logging.info("创建新的 HTML 文件")
 
     existing_data = OrderedDict()
     if "<table" in html_content:
@@ -175,6 +179,7 @@ def generate_html_report(results, report_file="index.html"):
         content_div_end = html_content.find('</div>', content_div_start) + 6
         html_content = html_content[:content_div_start] + '<div id="content">' + table_html + html_content[content_div_end:]
 
+    logging.info(f"准备写入 HTML 文件: {report_file}")
     with open(report_file, "w", encoding="utf-8") as f:
         f.write(html_content)
     logging.info(f"HTML 报告已生成: {report_file}")
@@ -188,7 +193,7 @@ def update_readme(formatted_time):
     github_repo = os.environ.get("GITHUB_REPOSITORY")
     if github_repo:
         commit_sha = os.environ.get("GITHUB_SHA")
-        index_history_link = f"[{current_date}](https://github.com/{github_repo}/commits/{commit_sha}/index.html)"
+        index_history_link = f"[{current_date}](https://github.com/{github_repo}/commits/{commit_sha}/docs/index.html)"
     else:
         index_history_link = current_date
         logging.warning("未找到 GITHUB_REPOSITORY 环境变量, 无法生成历史链接。")

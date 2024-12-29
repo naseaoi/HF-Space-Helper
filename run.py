@@ -86,7 +86,7 @@ def generate_html_report(results, report_file="docs/index.html"):
     os.makedirs(os.path.dirname(report_file), exist_ok=True)
     current_time_utc = datetime.datetime.now(pytz.utc)
     current_time_cst = current_time_utc.astimezone(pytz.timezone('Asia/Shanghai'))
-    formatted_time = current_time_cst.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+    formatted_time = current_time_cst.strftime('%Y-%m-%d %H:%M:%S')
     current_date = formatted_time.split(" ")[0]
 
     if os.path.exists(report_file):
@@ -98,7 +98,7 @@ def generate_html_report(results, report_file="docs/index.html"):
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Hugging Face 空间状态</title>
+            <title>Hugging Face空间状态</title>
             <style>
                 body { font-family: sans-serif; }
                 .log-entry { margin-bottom: 10px; }
@@ -120,20 +120,20 @@ def generate_html_report(results, report_file="docs/index.html"):
     content_div_end = html_content.find('</div>', content_div_start) + 6
     content_html = html_content[content_div_start:content_div_end]
 
-    log_entries = content_html.split('<div class="log-entry">')[1:] 
+    log_entries = content_html.split('<div class="log-entry">')[1:]
     for entry in log_entries:
         timestamp_start = entry.find('<span class="timestamp">') + len('<span class="timestamp">')
         timestamp_end = entry.find('</span>', timestamp_start)
         timestamp = entry[timestamp_start:timestamp_end].strip()
         existing_data[timestamp] = {}
-        
+
         for space in space_list:
             space_status_start = entry.find(f"{space}:")
             if space_status_start != -1:
                 space_status_start += len(f"{space}:")
                 space_status_end = entry.find("<br>", space_status_start)
                 space_status_str = entry[space_status_start:space_status_end].strip()
-                
+
                 if "✅" in space_status_str:
                     duration_start = space_status_str.find("(") + 1
                     duration_end = space_status_str.find(")", duration_start)
@@ -167,7 +167,13 @@ def generate_html_report(results, report_file="docs/index.html"):
 
     logs_html = "".join(logs_html_list)
 
-    html_content = html_content[:content_div_start] + '<div id="content">' + logs_html + html_content[content_div_end:]
+    footer_html = f"""
+    <div style="margin-top: 15px; text-align: center;">
+        Copyright &copy; {datetime.datetime.now().year} <a href="https://linux.do/u/f-droid" target="_blank" style="color: #007BFF; text-decoration: none;">F-Droid</a> retain all rights reserved.<br>如果您喜欢这个工具，请给作者点个赞吧！😊
+    </div>
+    """
+
+    html_content = html_content[:content_div_start] + '<div id="content">' + logs_html + footer_html + '</div>' + html_content[content_div_end+6:]
 
     logging.info(f"准备写入 HTML 文件: {report_file}")
     with open(report_file, "w", encoding="utf-8") as f:

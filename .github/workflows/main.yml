@@ -1,4 +1,4 @@
-name: 🤗空间状态检查与自动构建
+name: 抱抱脸空间状态检查与自动构建
 
 on:
   workflow_dispatch:

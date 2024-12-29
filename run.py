@@ -92,7 +92,7 @@ def generate_html_report(results, report_file="docs/index.html"):
     if os.path.exists(report_file):
         with open(report_file, "r", encoding="utf-8") as f:
             html_content = f.read()
-        logging.info(f"已存在 HTML 文件, 内容长度: {len(html_content)}")
+        logging.info(f"已存在HTML文件, 内容长度: {len(html_content)}")
     else:
         html_content = """
         <!DOCTYPE html>

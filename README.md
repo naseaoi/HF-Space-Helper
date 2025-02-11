@@ -34,3 +34,4 @@
 | [2025-02-11](https://github.com/naseaoi/HF-Space-Helper/commits/cb368cd5f756f1c7e7e12736b7e381efb3d601f2/docs/index.html) |  |
 | [2025-02-11](https://github.com/naseaoi/HF-Space-Helper/commits/09a8a7ae654b2536381c6232f147d45aa67224fe/docs/index.html) |  |
 | [2025-02-11](https://github.com/naseaoi/HF-Space-Helper/commits/75c435dc50e2d90e440a35ef6de5c9a797270103/docs/index.html) |  |
+| [2025-02-12](https://github.com/naseaoi/HF-Space-Helper/commits/62ae20d64be28b865418eebac36c9fba42d777a3/docs/index.html) |  |
